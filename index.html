@@ -12,8 +12,11 @@
             --secondary-color: #6c757d;
             --teacher-primary-color: #17a2b8;
             --teacher-primary-hover: #138496;
-            --background-color: #f4f7f6;
+            --background-color: linear-gradient(135deg, #e0f2fe, #fdf2f8); /* light gradient bg */
             --surface-color: #ffffff;
+            --surface-accent: #f0f9ff;   /* light blue tint for cards */
+            --surface-alt: #fff7ed;      /* light orange tint */
+            --surface-green: #ecfdf5;    /* light green tint */
             --text-color: #333;
             --border-color: #dee2e6;
             --success-color: #28a745;
@@ -28,7 +31,7 @@
 
         body {
             font-family: var(--font-family);
-            background-color: var(--background-color);
+            background: var(--background-color); /* gradient applied */
             color: var(--text-color);
             display: flex;
             justify-content: center;
@@ -53,9 +56,9 @@
 
         /* --- 3. Component Styles --- */
         .card {
-            background-color: var(--surface-color);
+            background-color: var(--surface-accent); /* default light blue */
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             padding: 1.5rem;
             margin-bottom: 1rem;
         }
@@ -149,6 +152,11 @@
         .breadcrumb a { color: var(--primary-color); text-decoration: none; cursor: pointer; }
 
         /* Dashboard (Student & Teacher) */
+        #student-up-next-card,
+        #teacher-next-class-card {
+            background-color: var(--surface-green); /* green tint for "Next Class" */
+        }
+
         .courses-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -156,9 +164,13 @@
         }
         .course-card {
             cursor: pointer;
+            background-color: var(--surface-color); /* clean white for courses */
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        .course-card:hover { transform: translateY(-5px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
 
         /* Course View */
         .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }
@@ -180,6 +192,10 @@
         .sidebar { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 1rem; }
         .bandwidth-controls { position: absolute; top: 1rem; right: 1rem; z-index: 10; }
         .bandwidth-controls select { padding: 0.5rem; border-radius: 6px; }
+        
+        .chat-window { background-color: var(--surface-alt); } /* orange tint for chat */
+        .participants-window { background-color: var(--surface-accent); } /* blue tint */
+
         .chat-window .messages { height: 150px; overflow-y: auto; border: 1px solid var(--border-color); padding: 0.5rem; margin-bottom: 0.5rem; }
         .chat-window input { width: 100%; padding: 0.5rem; }
 
@@ -194,9 +210,6 @@
 </head>
 <body>
 
-    <!-- ====================================================== -->
-    <!-- PAGE: LANDING                                          -->
-    <!-- ====================================================== -->
     <div id="landing-page" class="page active">
         <div class="landing-container">
             <h1>Welcome to 🎓 Virtual Classroom</h1>
@@ -211,9 +224,6 @@
         </div>
     </div>
 
-    <!-- ====================================================== -->
-    <!-- PAGE: LOGIN                                            -->
-    <!-- ====================================================== -->
     <div id="login-page" class="page">
         <div class="login-container card">
             <h2 id="login-role-title">Login</h2>
@@ -233,9 +243,6 @@
         </div>
     </div>
 
-    <!-- ====================================================== -->
-    <!-- PAGE: STUDENT DASHBOARD                                -->
-    <!-- ====================================================== -->
     <div id="student-dashboard-page" class="page">
         <header class="header">
             <div class="logo">🎓 Virtual Classroom</div>
@@ -251,9 +258,6 @@
         </main>
     </div>
 
-    <!-- ====================================================== -->
-    <!-- PAGE: TEACHER DASHBOARD                                -->
-    <!-- ====================================================== -->
     <div id="teacher-dashboard-page" class="page">
         <header class="header">
             <div class="logo">🎓 Virtual Classroom</div>
@@ -270,11 +274,8 @@
     </div>
 
 
-    <!-- ====================================================== -->
-    <!-- PAGE: COURSE DETAILS (Shared)                          -->
-    <!-- ====================================================== -->
     <div id="course-page" class="page">
-         <header class="header">
+       <header class="header">
             <div class="logo">🎓 Virtual Classroom</div>
             <div class="user-info">
                 Welcome, <strong class="user-name-placeholder">User</strong> | <a class="logout-btn">Logout</a>
@@ -297,11 +298,8 @@
         </main>
     </div>
 
-    <!-- ====================================================== -->
-    <!-- PAGE: LIVE CLASS (Shared)                              -->
-    <!-- ====================================================== -->
     <div id="live-class-page" class="page">
-         <header class="header">
+       <header class="header">
             <div class="logo">🔴 LIVE: <span id="live-class-title">Web Dev</span></div>
             <div class="user-info">
                 <a class="back-to-dashboard-link">Exit Session</a>
@@ -566,4 +564,3 @@
     </script>
 </body>
 </html>
-

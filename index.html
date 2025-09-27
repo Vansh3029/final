@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Classroom</title>
+    <style>
+        /* --- 1. General Styles & CSS Variables --- */
+        :root {
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --secondary-color: #6c757d;
+            --teacher-primary-color: #17a2b8;
+            --teacher-primary-hover: #138496;
+            --background-color: #f4f7f6;
+            --surface-color: #ffffff;
+            --text-color: #333;
+            --border-color: #dee2e6;
+            --success-color: #28a745;
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 1rem;
+        }
+
+        /* --- 2. Page/View Management --- */
+        .page {
+            display: none; /* Hide all pages by default */
+            width: 100%;
+        }
+        .page.active {
+            display: block; /* Show only the active page */
+        }
+
+        /* --- 3. Component Styles --- */
+        .card {
+            background-color: var(--surface-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        
+        .btn-secondary { background-color: var(--secondary-color); color: white; }
+        .btn-secondary:hover { background-color: #5a6268; }
+
+        .btn-info { background-color: var(--teacher-primary-color); color: white; }
+        .btn-info:hover { background-color: var(--teacher-primary-hover); }
+        
+        .btn-success { background-color: var(--success-color); color: white; }
+
+        h1, h2, h3 { margin-bottom: 1rem; }
+
+        /* --- 4. Page-Specific Styles --- */
+        
+        /* Landing Page */
+        .landing-container {
+            max-width: 600px;
+            margin: 4rem auto;
+            text-align: center;
+            padding: 2rem;
+        }
+        .landing-container h1 { font-size: 2.5rem; color: var(--text-color); }
+        .landing-container p { font-size: 1.2rem; color: var(--secondary-color); margin-bottom: 2rem; }
+        .role-selection { display: flex; justify-content: center; gap: 1rem; }
+        .role-selection .btn { padding: 1rem 2rem; font-size: 1.1rem; }
+        .language-selection {
+            margin-top: 3rem;
+            font-size: 0.9rem;
+        }
+        .language-selection a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+        }
+        .language-selection a.lang-active {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+
+        /* Login Page */
+        #login-page .login-container {
+            max-width: 400px;
+            margin: 4rem auto;
+            text-align: center;
+        }
+        #login-page #login-role-title { font-size: 1.8rem; }
+        #login-page .form-group { margin-bottom: 1rem; text-align: left; }
+        #login-page input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        #login-page .btn { width: 100%; }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+        .header .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary-color); }
+        .header .user-info { font-size: 0.9rem; }
+        .header a { color: var(--primary-color); text-decoration: none; cursor: pointer; }
+        .breadcrumb { margin-bottom: 1rem; font-size: 0.9rem; color: var(--secondary-color); }
+        .breadcrumb a { color: var(--primary-color); text-decoration: none; cursor: pointer; }
+
+        /* Dashboard (Student & Teacher) */
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        .course-card {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .course-card:hover { transform: translateY(-5px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+        /* Course View */
+        .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }
+        .tab-button { padding: 0.75rem 1.5rem; cursor: pointer; border: none; background: none; font-size: 1rem; border-bottom: 3px solid transparent; }
+        .tab-button.active { border-bottom-color: var(--primary-color); font-weight: 600; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .session-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 0.5rem; }
+        .session-item .actions { display: flex; gap: 0.5rem; }
+
+        /* Live Class View */
+        #live-class-page .classroom-layout { display: flex; gap: 1rem; height: 75vh; }
+        .main-pane { flex-grow: 1; background-color: #000; color: white; display: flex; justify-content: center; align-items: center; flex-direction: column; border-radius: 8px; position: relative; }
+        #video-placeholder #bandwidth-status {
+            font-size: 1.25rem;
+            color: #ccc;
+            margin-top: 1rem;
+        }
+        .sidebar { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 1rem; }
+        .bandwidth-controls { position: absolute; top: 1rem; right: 1rem; z-index: 10; }
+        .bandwidth-controls select { padding: 0.5rem; border-radius: 6px; }
+        .chat-window .messages { height: 150px; overflow-y: auto; border: 1px solid var(--border-color); padding: 0.5rem; margin-bottom: 0.5rem; }
+        .chat-window input { width: 100%; padding: 0.5rem; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            #live-class-page .classroom-layout { flex-direction: column; height: auto; }
+            .sidebar { width: 100%; flex-direction: row; }
+            .session-item { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .role-selection { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ====================================================== -->
+    <!-- PAGE: LANDING                                          -->
+    <!-- ====================================================== -->
+    <div id="landing-page" class="page active">
+        <div class="landing-container">
+            <h1>Welcome to 🎓 Virtual Classroom</h1>
+            <p>High-quality, accessible education for everyone. Log in to begin.</p>
+            <div class="role-selection">
+                <button id="show-student-login" class="btn btn-primary">Student Login</button>
+                <button id="show-teacher-login" class="btn btn-info">Teacher Login</button>
+            </div>
+            <div class="language-selection">
+                <a class="lang-active">English</a> | <a>हिन्दी</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- PAGE: LOGIN                                            -->
+    <!-- ====================================================== -->
+    <div id="login-page" class="page">
+        <div class="login-container card">
+            <h2 id="login-role-title">Login</h2>
+            <p style="margin-bottom: 2rem; color: var(--secondary-color);">Enter your credentials to continue.</p>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+            <a id="back-to-landing" style="display:block; margin-top: 1rem; cursor:pointer;">&larr; Back to Role Selection</a>
+        </div>
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- PAGE: STUDENT DASHBOARD                                -->
+    <!-- ====================================================== -->
+    <div id="student-dashboard-page" class="page">
+        <header class="header">
+            <div class="logo">🎓 Virtual Classroom</div>
+            <div class="user-info">
+                Welcome, <strong id="student-name">Student</strong> | <a class="logout-btn">Logout</a>
+            </div>
+        </header>
+        <main class="container">
+            <h2>Student Dashboard</h2>
+            <div class="card" id="student-up-next-card"></div>
+            <h3>My Courses</h3>
+            <div class="courses-grid" id="student-courses-grid"></div>
+        </main>
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- PAGE: TEACHER DASHBOARD                                -->
+    <!-- ====================================================== -->
+    <div id="teacher-dashboard-page" class="page">
+        <header class="header">
+            <div class="logo">🎓 Virtual Classroom</div>
+            <div class="user-info">
+                Welcome, <strong id="teacher-name">Teacher</strong> | <a class="logout-btn">Logout</a>
+            </div>
+        </header>
+        <main class="container">
+            <h2>Teacher Dashboard</h2>
+            <div class="card" id="teacher-next-class-card"></div>
+            <h3>My Courses (Teaching)</h3>
+            <div class="courses-grid" id="teacher-courses-grid"></div>
+        </main>
+    </div>
+
+
+    <!-- ====================================================== -->
+    <!-- PAGE: COURSE DETAILS (Shared)                          -->
+    <!-- ====================================================== -->
+    <div id="course-page" class="page">
+         <header class="header">
+            <div class="logo">🎓 Virtual Classroom</div>
+            <div class="user-info">
+                Welcome, <strong class="user-name-placeholder">User</strong> | <a class="logout-btn">Logout</a>
+            </div>
+        </header>
+        <main class="container">
+            <div class="breadcrumb">
+                <a class="back-to-dashboard-link">Dashboard</a> &gt; <span id="course-breadcrumb-name"></span>
+            </div>
+            <h2 id="course-title"></h2>
+            <p id="course-instructor" style="color: var(--secondary-color); margin-top: -1rem; margin-bottom: 1.5rem;"></p>
+            
+            <div class="tabs">
+                <button class="tab-button active" data-tab="sessions-content">Sessions & Materials</button>
+                <button class="tab-button" data-tab="quizzes-content">Quizzes & Assignments</button>
+            </div>
+
+            <div id="sessions-content" class="tab-content active"></div>
+            <div id="quizzes-content" class="tab-content"></div>
+        </main>
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- PAGE: LIVE CLASS (Shared)                              -->
+    <!-- ====================================================== -->
+    <div id="live-class-page" class="page">
+         <header class="header">
+            <div class="logo">🔴 LIVE: <span id="live-class-title">Web Dev</span></div>
+            <div class="user-info">
+                <a class="back-to-dashboard-link">Exit Session</a>
+            </div>
+        </header>
+        <main class="container">
+            <div class="classroom-layout">
+                <div class="main-pane">
+                    <div class="bandwidth-controls">
+                        <select id="bandwidth-selector">
+                            <option value="full">Full Experience</option>
+                            <option value="low">Low Bandwidth (Audio + Screen)</option>
+                            <option value="audio">Audio Only</option>
+                        </select>
+                    </div>
+                    <div id="video-placeholder">
+                        <h3>Instructor's Screen Share</h3>
+                        <p id="bandwidth-status">Mode: Full Experience</p>
+                    </div>
+                </div>
+                <div class="sidebar">
+                    <div class="card chat-window">
+                        <h5>Chat</h5>
+                        <div class="messages">[2:05 PM] Instructor: Welcome everyone!</div>
+                        <input type="text" placeholder="Type a message...">
+                    </div>
+                    <div class="card participants-window">
+                        <h5>Participants (3)</h5>
+                        <p>👤 Instructor</p><p>👤 You</p><p>👤 Jane Doe</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- 1. STATE MANAGEMENT ---
+        let currentUserRole = null; // 'student' or 'teacher'
+
+        // --- 2. DUMMY DATA ---
+        const student = { name: 'Priya Sharma' };
+        const studentCourses = [
+            { id: 101, title: "Introduction to Web Development", instructor: "Mr. Raj Singh" },
+            { id: 102, title: "Data Structures in Python", instructor: "Dr. Anjali Verma" }
+        ];
+
+        const teacher = { name: 'Mr. Raj Singh' };
+        const teacherCourses = [
+            { id: 101, title: "Introduction to Web Development", students: 35 },
+            { id: 201, title: "Advanced CSS", students: 20 }
+        ];
+
+        const allSessions = {
+            101: [
+                { topic: "Class 1: HTML Basics", date: "2025-09-29T14:00:00" },
+                { topic: "Class 2: CSS Fundamentals", date: "2025-10-01T14:00:00" }
+            ],
+            102: [{ topic: "Review: Lists and Tuples", date: "2025-09-26T11:00:00" }],
+            201: [{ topic: "Deep Dive into Flexbox", date: "2025-09-30T16:00:00" }]
+        };
+
+        const allQuizzes = {
+             101: [
+                { title: "Quiz 1: HTML Structure", due: "2025-10-05T23:59:00", status: "Not Started" },
+                { title: "Quiz 2: CSS Selectors", due: "2025-10-12T23:59:00", status: "Not Started" }
+            ],
+            102: [
+                { title: "Quiz 1: Python Lists", due: "2025-10-03T23:59:00", status: "Completed" }
+            ],
+            201: [] // No quizzes for this course
+        };
+
+
+        // --- 3. PAGE NAVIGATION ---
+        const pages = document.querySelectorAll('.page');
+        function showPage(pageId) {
+            pages.forEach(page => page.classList.toggle('active', page.id === pageId));
+        }
+
+        // --- 4. RENDER FUNCTIONS ---
+        function renderStudentDashboard() {
+            document.getElementById('student-name').textContent = student.name;
+            const upNextCard = document.getElementById('student-up-next-card');
+            upNextCard.innerHTML = `<h3>Up Next: Live Class</h3><p><strong>Intro to Web Dev</strong>: CSS Fundamentals</p><p>Time: 1 Oct 2025, 2:00 PM</p><button class="btn btn-success" style="margin-top: 1rem;">Join Now</button>`;
+            upNextCard.querySelector('button').addEventListener('click', () => showPage('live-class-page'));
+
+            const coursesGrid = document.getElementById('student-courses-grid');
+            coursesGrid.innerHTML = '';
+            studentCourses.forEach(course => {
+                coursesGrid.innerHTML += `<div class="card course-card" data-course-id="${course.id}"><h4>${course.title}</h4><p style="color: var(--secondary-color);">${course.instructor}</p></div>`;
+            });
+        }
+
+        function renderTeacherDashboard() {
+            document.getElementById('teacher-name').textContent = teacher.name;
+            const nextClassCard = document.getElementById('teacher-next-class-card');
+            nextClassCard.innerHTML = `<h3>Next Class to Teach</h3><p><strong>Advanced CSS</strong>: Deep Dive into Flexbox</p><p>Time: 30 Sep 2025, 4:00 PM</p><button class="btn btn-info" style="margin-top: 1rem;">Start Class</button>`;
+            nextClassCard.querySelector('button').addEventListener('click', () => showPage('live-class-page'));
+            
+            const coursesGrid = document.getElementById('teacher-courses-grid');
+            coursesGrid.innerHTML = '';
+            teacherCourses.forEach(course => {
+                coursesGrid.innerHTML += `<div class="card course-card" data-course-id="${course.id}"><h4>${course.title}</h4><p style="color: var(--secondary-color);">${course.students} students enrolled</p></div>`;
+            });
+        }
+
+        function renderCoursePage(courseId) {
+            const course = [...studentCourses, ...teacherCourses].find(c => c.id == courseId);
+            if (!course) return;
+
+            // Render header and breadcrumb
+            document.querySelectorAll('.user-name-placeholder').forEach(el => el.textContent = currentUserRole === 'student' ? student.name : teacher.name);
+            document.getElementById('course-breadcrumb-name').textContent = course.title;
+            document.getElementById('course-title').textContent = course.title;
+            document.getElementById('course-instructor').textContent = `Instructor: ${course.instructor || teacher.name}`;
+            
+            // Render sessions tab
+            const sessionsContent = document.getElementById('sessions-content');
+            sessionsContent.innerHTML = '<h3>Sessions</h3>';
+            const sessionsForCourse = allSessions[courseId] || [];
+            sessionsForCourse.forEach(session => {
+                const isPast = new Date(session.date) < new Date();
+                const sessionItem = document.createElement('div');
+                sessionItem.className = 'session-item';
+                let buttons = '';
+                if (isPast) {
+                    buttons = `<button class="btn btn-secondary">Watch</button><button class="btn btn-primary">Download</button>`;
+                } else if (currentUserRole === 'student') {
+                    buttons = `<button class="btn btn-success">Join Live</button>`;
+                } else { // Teacher view for upcoming class
+                    buttons = `<button class="btn btn-info">Start Class</button>`;
+                }
+                sessionItem.innerHTML = `<div><strong>${session.topic}</strong><br><small>${new Date(session.date).toLocaleString()}</small></div><div class="actions">${buttons}</div>`;
+                sessionItem.querySelector('.btn-success, .btn-info')?.addEventListener('click', () => showPage('live-class-page'));
+                sessionsContent.appendChild(sessionItem);
+            });
+
+            // Render quizzes tab
+            const quizzesContent = document.getElementById('quizzes-content');
+            quizzesContent.innerHTML = ''; // Clear previous content
+            const quizzesForCourse = allQuizzes[courseId] || [];
+
+            if (quizzesForCourse.length > 0) {
+                quizzesContent.innerHTML = '<h3>Quizzes & Assignments</h3>';
+                quizzesForCourse.forEach(quiz => {
+                    const quizCard = document.createElement('div');
+                    quizCard.className = 'card';
+                    quizCard.innerHTML = `
+                        <h4>${quiz.title}</h4>
+                        <p>Due: ${new Date(quiz.due).toLocaleString()}</p>
+                        <p>Status: ${quiz.status}</p>
+                        ${quiz.status === 'Not Started' ? `<button class="btn btn-primary" style="margin-top: 1rem;">Start Quiz</button>` : ''}
+                    `;
+                    quizzesContent.appendChild(quizCard);
+                });
+            } else {
+                quizzesContent.innerHTML = `<div class="card"><p>No quizzes or assignments for this course yet.</p></div>`;
+            }
+
+            // Reset to the first tab being active
+            document.querySelector('.tab-button[data-tab="sessions-content"]').classList.add('active');
+            document.querySelector('.tab-button[data-tab="quizzes-content"]').classList.remove('active');
+            document.getElementById('sessions-content').classList.add('active');
+            document.getElementById('quizzes-content').classList.remove('active');
+
+            showPage('course-page');
+        }
+
+        // --- 5. EVENT LISTENERS ---
+        // Role selection
+        document.getElementById('show-student-login').addEventListener('click', () => {
+            currentUserRole = 'student';
+            const loginTitle = document.getElementById('login-role-title');
+            const loginButton = document.querySelector('#login-form .btn');
+            
+            loginTitle.textContent = 'Student Login';
+            loginTitle.style.color = 'var(--primary-color)';
+            loginButton.className = 'btn btn-primary';
+            document.getElementById('email').value = "student@example.com";
+            document.getElementById('password').value = "student123";
+
+            showPage('login-page');
+        });
+
+        document.getElementById('show-teacher-login').addEventListener('click', () => {
+            currentUserRole = 'teacher';
+            const loginTitle = document.getElementById('login-role-title');
+            const loginButton = document.querySelector('#login-form .btn');
+
+            loginTitle.textContent = 'Teacher Login';
+            loginTitle.style.color = 'var(--teacher-primary-color)';
+            loginButton.className = 'btn btn-info';
+            document.getElementById('email').value = "teacher@example.com";
+            document.getElementById('password').value = "teacher123";
+
+            showPage('login-page');
+        });
+
+        document.getElementById('back-to-landing').addEventListener('click', () => showPage('landing-page'));
+
+        // Login form
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (currentUserRole === 'student') {
+                renderStudentDashboard();
+                showPage('student-dashboard-page');
+            } else if (currentUserRole === 'teacher') {
+                renderTeacherDashboard();
+                showPage('teacher-dashboard-page');
+            }
+        });
+
+        // Tab switching in course page
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.toggle('active', content.id === button.dataset.tab);
+                });
+            });
+        });
+
+        // Bandwidth selector
+        document.getElementById('bandwidth-selector').addEventListener('change', (e) => {
+            const statusEl = document.getElementById('bandwidth-status');
+            const videoEl = document.getElementById('video-placeholder');
+            const value = e.target.value;
+            let statusText = '';
+            
+            if (value === 'full') statusText = 'Mode: Full Experience';
+            else if (value === 'low') statusText = 'Mode: Low Bandwidth (Audio + Screen)';
+            else statusText = 'Mode: Audio Only';
+
+            videoEl.style.opacity = (value === 'audio') ? 0.3 : 1;
+            statusEl.textContent = statusText;
+        });
+
+        // Body-level click delegation
+        document.body.addEventListener('click', (e) => {
+            // Course card click
+            if (e.target.matches('.course-card, .course-card *')) {
+                const card = e.target.closest('.course-card');
+                renderCoursePage(card.dataset.courseId);
+            }
+            // Logout button
+            if (e.target.matches('.logout-btn')) {
+                showPage('landing-page');
+            }
+            // Back to dashboard link
+            if (e.target.matches('.back-to-dashboard-link')) {
+                const pageToShow = currentUserRole === 'student' ? 'student-dashboard-page' : 'teacher-dashboard-page';
+                showPage(pageToShow);
+            }
+        });
+
+        // --- 6. INITIALIZATION ---
+        showPage('landing-page');
+    });
+    </script>
+</body>
+</html>
+

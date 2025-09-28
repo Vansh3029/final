@@ -627,14 +627,19 @@
 
             const coursesGrid = document.getElementById('student-courses-grid');
             coursesGrid.innerHTML = '';
-             // Add AI helper card before the grid
-            coursesGrid.insertAdjacentHTML('beforebegin', `
-                <div class="card" id="ai-study-helper-card">
-                    <h3>✨ AI Study Helper</h3>
-                    <p style="color: var(--secondary-color); margin-bottom: 1rem;">Stuck on a concept? Ask our AI assistant for a simple explanation.</p>
-                    <button id="ask-ai-student-btn" class="btn btn-primary">Ask AI</button>
-                </div>
-            `);
+            
+            // FIX: Check if the AI helper card already exists to prevent duplication
+            if (!document.getElementById('ai-study-helper-card')) {
+                 // Add AI helper card before the grid
+                coursesGrid.insertAdjacentHTML('beforebegin', `
+                    <div class="card" id="ai-study-helper-card">
+                        <h3>✨ AI Study Helper</h3>
+                        <p style="color: var(--secondary-color); margin-bottom: 1rem;">Stuck on a concept? Ask our AI assistant for a simple explanation.</p>
+                        <button id="ask-ai-student-btn" class="btn btn-primary">Ask AI</button>
+                    </div>
+                `);
+            }
+           
             studentCourses.forEach(course => {
                 coursesGrid.innerHTML += `<div class="card course-card" data-course-id="${course.id}"><h4>${course.title}</h4><p style="color: var(--secondary-color);">${course.instructor}</p></div>`;
             });
@@ -939,4 +944,3 @@
     </script>
 </body>
 </html>
-

@@ -150,7 +150,7 @@
         }
         #login-page #login-role-title { font-size: 1.8rem; }
         #login-page .form-group { margin-bottom: 1rem; text-align: left; }
-        #login-page input {
+        #login-page input, .form-group input, .form-group textarea {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid var(--border-color);
@@ -158,6 +158,7 @@
             font-size: 1rem;
             background-color: var(--surface-color);
             color: var(--text-color);
+            margin-top: 0.25rem;
         }
         #login-page .btn { width: 100%; }
 
@@ -212,7 +213,7 @@
         }
 
         /* Course View */
-        .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; flex-wrap: wrap; }
         .tab-button { padding: 0.75rem 1.5rem; cursor: pointer; border: none; background: none; font-size: 1rem; border-bottom: 3px solid transparent; }
         .tab-button.active { border-bottom-color: var(--primary-color); font-weight: 600; }
         .tab-content { display: none; }
@@ -238,10 +239,68 @@
         .chat-window .messages { height: 150px; overflow-y: auto; border: 1px solid var(--border-color); padding: 0.5rem; margin-bottom: 0.5rem; }
         .chat-window input { width: 100%; padding: 0.5rem; }
 
+        /* --- 5. Poll & AI Feature Styles --- */
+        .poll-option-input { margin-bottom: 0.5rem; }
+        #poll-results-area .poll-result-item { margin-bottom: 0.75rem; }
+        .poll-result-bar {
+            background-color: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.25rem 0;
+        }
+        .poll-result-fill {
+            background-color: var(--primary-color);
+            height: 20px;
+            color: white;
+            font-size: 0.8rem;
+            line-height: 20px;
+            text-align: right;
+            padding-right: 5px;
+            white-space: nowrap;
+            transition: width 0.5s ease-in-out;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            width: 90%;
+            max-width: 500px;
+            padding: 2rem;
+            background-color: var(--surface-color);
+            display: flex;
+            flex-direction: column;
+        }
+        #poll-options .poll-option {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        #poll-options input[type="radio"] {
+            margin-right: 0.75rem;
+        }
+        #ai-modal-result ul { list-style-position: inside; padding-left: 0.5rem; }
+
         /* Responsive */
         @media (max-width: 768px) {
             #live-class-page .classroom-layout { flex-direction: column; height: auto; }
-            .sidebar { width: 100%; flex-direction: row; }
+            .sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; }
+            .sidebar .card { flex-basis: 100%; } /* Ensure cards take full width on smaller sidebar */
             .session-item { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
             .role-selection { flex-direction: column; }
         }
@@ -331,12 +390,12 @@
             <p id="course-instructor" style="color: var(--secondary-color); margin-top: -1rem; margin-bottom: 1.5rem;"></p>
             
             <div class="tabs">
-                <button class="tab-button active" data-tab="sessions-content">Sessions & Materials</button>
-                <button class="tab-button" data-tab="quizzes-content">Quizzes & Assignments</button>
+                <!-- Tabs will be dynamically inserted here -->
             </div>
 
-            <div id="sessions-content" class="tab-content active"></div>
+            <div id="sessions-content" class="tab-content"></div>
             <div id="quizzes-content" class="tab-content"></div>
+            <div id="ai-tools-content" class="tab-content"></div>
         </main>
     </div>
 
@@ -372,9 +431,53 @@
                         <h5>Participants (3)</h5>
                         <p>👤 Instructor</p><p>👤 You</p><p>👤 Jane Doe</p>
                     </div>
+                    <!-- Teacher Poll Controls -->
+                    <div class="card" id="teacher-poll-controls" style="display: none;">
+                        <h5>Polls</h5>
+                        <div id="poll-creation-area">
+                            <p style="font-size: 0.9rem; margin-bottom: 1rem;">Engage students with a live poll.</p>
+                            <button id="create-poll-btn" class="btn btn-secondary" style="width: 100%;">Create New Poll</button>
+                        </div>
+                        <div id="poll-management-area" style="display: none;">
+                             <!-- Poll creation form or results will be injected here -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Student Poll Modal -->
+    <div id="student-poll-modal" class="modal-overlay">
+        <div class="modal-content card">
+            <h3 id="poll-question-title">Poll</h3>
+            <div id="poll-content-wrapper">
+                <p id="poll-question-text" style="margin-bottom: 1.5rem;"></p>
+                <form id="poll-vote-form">
+                    <div id="poll-options-container"></div>
+                    <p id="poll-error-message" style="color: red; margin-top: 1rem; display: none;"></p>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Submit Vote</button>
+                </form>
+            </div>
+            <div id="poll-confirmation-message" style="display: none; text-align: center;">
+                <h4>Thank you for voting!</h4>
+                <p>Your response has been recorded.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gemini AI Assistant Modal -->
+    <div id="ai-assistant-modal" class="modal-overlay">
+        <div class="modal-content card">
+            <h3 id="ai-modal-title">AI Assistant</h3>
+            <div id="ai-modal-body" style="flex-grow: 1;">
+                <!-- Content will be injected by JS -->
+            </div>
+            <div id="ai-modal-result" style="margin-top: 1.5rem; max-height: 300px; overflow-y: auto; background: var(--surface-color); padding: 1rem; border-radius: 6px;"></div>
+            <div style="align-self: flex-end; margin-top: 1rem;">
+                <button id="close-ai-modal-btn" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
     </div>
 
 
@@ -408,6 +511,7 @@
 
         // --- 2. STATE MANAGEMENT & DUMMY DATA ---
         let currentUserRole = null; 
+        let activePoll = null; // To store { question, options: [{text, votes}] }
         const student = { name: 'Priya Sharma' };
         const studentCourses = [
             { id: 101, title: "Introduction to Web Development", instructor: "Mr. Raj Singh" },
@@ -437,22 +541,100 @@
             201: [] 
         };
 
+        // --- 3. GEMINI API INTEGRATION ---
+        const API_KEY = ""; // NOTE: This will be populated by the environment.
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
 
-        // --- 3. PAGE NAVIGATION ---
+        async function callGeminiAPI(payload, modalResultDiv) {
+            modalResultDiv.innerHTML = '<p>🧠 Thinking...</p>';
+
+            try {
+                // Exponential backoff for retries
+                let response;
+                let attempts = 0;
+                let delay = 1000;
+                while(attempts < 5) {
+                    response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.status === 429) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2;
+                        attempts++;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    return candidate.content.parts[0].text;
+                } else {
+                    console.error("Unexpected API response structure:", result);
+                    throw new Error("Could not extract text from the API response.");
+                }
+
+            } catch (error) {
+                console.error("Gemini API call failed:", error);
+                modalResultDiv.innerHTML = `<p style="color: red;">Error: Could not get a response from the AI. Please check the console and try again later.</p>`;
+                return null;
+            }
+        }
+
+
+        // --- 4. PAGE NAVIGATION ---
         const pages = document.querySelectorAll('.page');
         function showPage(pageId) {
             pages.forEach(page => page.classList.toggle('active', page.id === pageId));
         }
+        
+        function setupLiveClassView() {
+            const pollControls = document.getElementById('teacher-poll-controls');
+            if (currentUserRole === 'teacher') {
+                pollControls.style.display = 'block';
+                if (activePoll) { // Check if returning to a class with an active poll
+                    document.getElementById('poll-creation-area').style.display = 'none';
+                    document.getElementById('poll-management-area').style.display = 'block';
+                    renderPollResults();
+                } else {
+                    resetPollView();
+                }
+            } else { // Role is student
+                pollControls.style.display = 'none';
+                // If student joins and a poll is active, show it.
+                if (activePoll) {
+                    renderPollForStudent();
+                }
+            }
+            showPage('live-class-page');
+        }
 
-        // --- 4. RENDER FUNCTIONS ---
+
+        // --- 5. RENDER FUNCTIONS ---
         function renderStudentDashboard() {
             document.getElementById('student-name').textContent = student.name;
             const upNextCard = document.getElementById('student-up-next-card');
             upNextCard.innerHTML = `<h3>Up Next: Live Class</h3><p><strong>Intro to Web Dev</strong>: CSS Fundamentals</p><p>Time: 1 Oct 2025, 2:00 PM</p><button class="btn btn-success" style="margin-top: 1rem;">Join Now</button>`;
-            upNextCard.querySelector('button').addEventListener('click', () => showPage('live-class-page'));
+            upNextCard.querySelector('button').addEventListener('click', setupLiveClassView);
 
             const coursesGrid = document.getElementById('student-courses-grid');
             coursesGrid.innerHTML = '';
+             // Add AI helper card before the grid
+            coursesGrid.insertAdjacentHTML('beforebegin', `
+                <div class="card" id="ai-study-helper-card">
+                    <h3>✨ AI Study Helper</h3>
+                    <p style="color: var(--secondary-color); margin-bottom: 1rem;">Stuck on a concept? Ask our AI assistant for a simple explanation.</p>
+                    <button id="ask-ai-student-btn" class="btn btn-primary">Ask AI</button>
+                </div>
+            `);
             studentCourses.forEach(course => {
                 coursesGrid.innerHTML += `<div class="card course-card" data-course-id="${course.id}"><h4>${course.title}</h4><p style="color: var(--secondary-color);">${course.instructor}</p></div>`;
             });
@@ -462,7 +644,7 @@
             document.getElementById('teacher-name').textContent = teacher.name;
             const nextClassCard = document.getElementById('teacher-next-class-card');
             nextClassCard.innerHTML = `<h3>Next Class to Teach</h3><p><strong>Advanced CSS</strong>: Deep Dive into Flexbox</p><p>Time: 30 Sep 2025, 4:00 PM</p><button class="btn btn-info" style="margin-top: 1rem;">Start Class</button>`;
-            nextClassCard.querySelector('button').addEventListener('click', () => showPage('live-class-page'));
+            nextClassCard.querySelector('button').addEventListener('click', setupLiveClassView);
             
             const coursesGrid = document.getElementById('teacher-courses-grid');
             coursesGrid.innerHTML = '';
@@ -480,6 +662,24 @@
             document.getElementById('course-title').textContent = course.title;
             document.getElementById('course-instructor').textContent = `Instructor: ${course.instructor || teacher.name}`;
             
+            const tabsContainer = document.querySelector('#course-page .tabs');
+            tabsContainer.innerHTML = `
+                <button class="tab-button active" data-tab="sessions-content">Sessions & Materials</button>
+                <button class="tab-button" data-tab="quizzes-content">Quizzes & Assignments</button>
+            `;
+            if (currentUserRole === 'teacher') {
+                tabsContainer.innerHTML += `<button class="tab-button" data-tab="ai-tools-content">AI Tools</button>`;
+                document.getElementById('ai-tools-content').innerHTML = `
+                    <div class="card">
+                        <h3>✨ AI Quiz Generator</h3>
+                        <p style="color: var(--secondary-color); margin-bottom: 1rem;">Quickly generate a draft quiz for any topic in your course.</p>
+                        <button id="show-quiz-generator-btn" class="btn btn-info">Generate Quiz</button>
+                    </div>`;
+            } else {
+                 document.getElementById('ai-tools-content').innerHTML = '';
+            }
+            
+            // Render Sessions
             const sessionsContent = document.getElementById('sessions-content');
             sessionsContent.innerHTML = '<h3>Sessions</h3>';
             const sessionsForCourse = allSessions[courseId] || [];
@@ -496,105 +696,200 @@
                     buttons = `<button class="btn btn-info">Start Class</button>`;
                 }
                 sessionItem.innerHTML = `<div><strong>${session.topic}</strong><br><small>${new Date(session.date).toLocaleString()}</small></div><div class="actions">${buttons}</div>`;
-                sessionItem.querySelector('.btn-success, .btn-info')?.addEventListener('click', () => showPage('live-class-page'));
+                sessionItem.querySelector('.btn-success, .btn-info')?.addEventListener('click', setupLiveClassView);
                 sessionsContent.appendChild(sessionItem);
             });
 
+            // Render Quizzes
             const quizzesContent = document.getElementById('quizzes-content');
-            quizzesContent.innerHTML = ''; 
+            quizzesContent.innerHTML = '<h3>Quizzes & Assignments</h3>'; 
             const quizzesForCourse = allQuizzes[courseId] || [];
 
             if (quizzesForCourse.length > 0) {
-                quizzesContent.innerHTML = '<h3>Quizzes & Assignments</h3>';
                 quizzesForCourse.forEach(quiz => {
                     const quizCard = document.createElement('div');
                     quizCard.className = 'card';
-                    quizCard.innerHTML = `
-                        <h4>${quiz.title}</h4>
-                        <p>Due: ${new Date(quiz.due).toLocaleString()}</p>
-                        <p>Status: ${quiz.status}</p>
-                        ${quiz.status === 'Not Started' ? `<button class="btn btn-primary" style="margin-top: 1rem;">Start Quiz</button>` : ''}
-                    `;
+                    quizCard.innerHTML = `<h4>${quiz.title}</h4><p>Due: ${new Date(quiz.due).toLocaleString()}</p><p>Status: ${quiz.status}</p>${quiz.status === 'Not Started' ? `<button class="btn btn-primary" style="margin-top: 1rem;">Start Quiz</button>` : ''}`;
                     quizzesContent.appendChild(quizCard);
                 });
             } else {
-                quizzesContent.innerHTML = `<div class="card"><p>No quizzes or assignments for this course yet.</p></div>`;
+                quizzesContent.innerHTML += `<div class="card"><p>No quizzes or assignments for this course yet.</p></div>`;
             }
 
+            // Reset tabs to default
             document.querySelector('.tab-button[data-tab="sessions-content"]').classList.add('active');
+            document.querySelector('.tab-content#sessions-content').classList.add('active');
             document.querySelector('.tab-button[data-tab="quizzes-content"]').classList.remove('active');
-            document.getElementById('sessions-content').classList.add('active');
-            document.getElementById('quizzes-content').classList.remove('active');
-
+            document.querySelector('.tab-content#quizzes-content').classList.remove('active');
+            if(document.querySelector('.tab-button[data-tab="ai-tools-content"]')) {
+                document.querySelector('.tab-button[data-tab="ai-tools-content"]').classList.remove('active');
+                document.querySelector('.tab-content#ai-tools-content').classList.remove('active');
+            }
+            
             showPage('course-page');
         }
 
-        // --- 5. EVENT LISTENERS ---
-        document.getElementById('show-student-login').addEventListener('click', () => {
-            currentUserRole = 'student';
-            const loginTitle = document.getElementById('login-role-title');
-            const loginButton = document.querySelector('#login-form .btn');
+        // --- 6. POLL & AI RENDER FUNCTIONS ---
+        function renderPollCreationForm() {
+            const pollManagementArea = document.getElementById('poll-management-area');
+            pollManagementArea.innerHTML = `<form id="poll-create-form"><div class="form-group"><label for="poll-q">Question</label><input type="text" id="poll-q" required></div><div class="form-group"><label>Options (at least 2)</label><input type="text" class="poll-option-input" placeholder="Option 1" required><input type="text" class="poll-option-input" placeholder="Option 2" required><input type="text" class="poll-option-input" placeholder="Option 3"><input type="text" class="poll-option-input" placeholder="Option 4"></div><button type="submit" class="btn btn-info" style="width:100%;">Launch Poll</button></form>`;
+            document.getElementById('poll-create-form').addEventListener('submit', handlePollLaunch);
+        }
+
+        function renderPollResults() {
+             if (!activePoll) return;
+            const pollManagementArea = document.getElementById('poll-management-area');
+            const totalVotes = activePoll.options.reduce((sum, opt) => sum + opt.votes, 0);
             
-            loginTitle.textContent = 'Student Login';
-            loginTitle.style.color = 'var(--primary-color)';
-            loginButton.className = 'btn btn-primary';
-            document.getElementById('email').value = "student@example.com";
-            document.getElementById('password').value = "student123";
-
-            showPage('login-page');
-        });
-
-        document.getElementById('show-teacher-login').addEventListener('click', () => {
-            currentUserRole = 'teacher';
-            const loginTitle = document.getElementById('login-role-title');
-            const loginButton = document.querySelector('#login-form .btn');
-
-            loginTitle.textContent = 'Teacher Login';
-            loginTitle.style.color = 'var(--teacher-primary-color)';
-            loginButton.className = 'btn btn-info';
-            document.getElementById('email').value = "teacher@example.com";
-            document.getElementById('password').value = "teacher123";
-
-            showPage('login-page');
-        });
-
-        document.getElementById('back-to-landing').addEventListener('click', () => showPage('landing-page'));
-
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (currentUserRole === 'student') {
-                renderStudentDashboard();
-                showPage('student-dashboard-page');
-            } else if (currentUserRole === 'teacher') {
-                renderTeacherDashboard();
-                showPage('teacher-dashboard-page');
-            }
-        });
-
-        document.querySelectorAll('.tab-button').forEach(button => {
-            button.addEventListener('click', () => {
-                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.toggle('active', content.id === button.dataset.tab);
-                });
+            let resultsHTML = `<h6 style="margin-bottom: 0.5rem;">Live Results</h6><p style="font-weight: bold;">${activePoll.question}</p><div id="poll-results-container" style="margin-top:1rem;">`;
+            activePoll.options.forEach(option => {
+                const percentage = totalVotes > 0 ? ((option.votes / totalVotes) * 100).toFixed(1) : 0;
+                resultsHTML += `<div class="poll-result-item"><label>${option.text} (${option.votes} votes)</label><div class="poll-result-bar"><div class="poll-result-fill" style="width: ${percentage}%;">${percentage}%</div></div></div>`;
             });
-        });
+            resultsHTML += `</div><button id="end-poll-btn" class="btn btn-secondary" style="width:100%; margin-top:1rem;">End Poll</button>`;
+            pollManagementArea.innerHTML = resultsHTML;
+            document.getElementById('end-poll-btn').addEventListener('click', resetPollView);
+        }
 
-        document.getElementById('bandwidth-selector').addEventListener('change', (e) => {
-            const statusEl = document.getElementById('bandwidth-status');
-            const videoEl = document.getElementById('video-placeholder');
-            const value = e.target.value;
-            let statusText = '';
-            
-            if (value === 'full') statusText = 'Mode: Full Experience';
-            else if (value === 'low') statusText = 'Mode: Low Bandwidth (Audio + Screen)';
-            else statusText = 'Mode: Audio Only';
+        function renderPollForStudent() {
+            if (!activePoll) return;
+            // Reset modal state before showing
+            document.getElementById('poll-content-wrapper').style.display = 'block';
+            document.getElementById('poll-confirmation-message').style.display = 'none';
+            document.getElementById('poll-error-message').style.display = 'none';
+            document.getElementById('poll-vote-form').reset();
 
-            videoEl.style.opacity = (value === 'audio') ? 0.3 : 1;
-            statusEl.textContent = statusText;
-        });
+            document.getElementById('poll-question-text').textContent = activePoll.question;
+            const optionsContainer = document.getElementById('poll-options-container');
+            optionsContainer.innerHTML = '';
+            activePoll.options.forEach((option, index) => {
+                optionsContainer.innerHTML += `<div class="poll-option"><input type="radio" name="poll-vote" id="option-${index}" value="${index}"><label for="option-${index}">${option.text}</label></div>`;
+            });
+            document.getElementById('student-poll-modal').classList.add('visible');
+        }
+        
+        function resetPollView() {
+            activePoll = null;
+            document.getElementById('poll-creation-area').style.display = 'block';
+            document.getElementById('poll-management-area').style.display = 'none';
+            document.getElementById('poll-management-area').innerHTML = '';
+            document.getElementById('student-poll-modal').classList.remove('visible');
+        }
+        
+        const aiModal = document.getElementById('ai-assistant-modal');
+        const aiModalTitle = document.getElementById('ai-modal-title');
+        const aiModalBody = document.getElementById('ai-modal-body');
+        const aiModalResult = document.getElementById('ai-modal-result');
 
+        function showAiModal(title, bodyContent) {
+            aiModalTitle.textContent = title;
+            aiModalBody.innerHTML = bodyContent;
+            aiModalResult.innerHTML = '';
+            aiModal.classList.add('visible');
+        }
+
+        function hideAiModal() {
+            aiModal.classList.remove('visible');
+        }
+        
+        function displayGeneratedQuiz(quizData) {
+            let quizHtml = '<h4>Generated Quiz Preview:</h4>';
+            quizData.forEach((q, index) => {
+                quizHtml += `<div class="card" style="margin-top: 1rem; background-color: var(--surface-color);"><p><strong>Q${index + 1}:</strong> ${q.question}</p><ul>${q.options.map(opt => `<li>${opt} ${opt === q.answer ? ' (Correct)' : ''}</li>`).join('')}</ul></div>`;
+            });
+            quizHtml += '<p style="margin-top: 1rem;">You can now copy this content to create a new assignment.</p>';
+            aiModalResult.innerHTML = quizHtml;
+        }
+
+        // --- 7. EVENT HANDLERS ---
+        function handlePollLaunch(e) { e.preventDefault(); /* ... same as before ... */ }
+        
+        function handlePollVote(e) {
+            e.preventDefault();
+            const selectedOption = document.querySelector('input[name="poll-vote"]:checked');
+            const pollErrorMessage = document.getElementById('poll-error-message');
+
+            if (selectedOption && activePoll) {
+                pollErrorMessage.style.display = 'none';
+
+                const optionIndex = parseInt(selectedOption.value, 10);
+                activePoll.options[optionIndex].votes++;
+
+                // Show confirmation message
+                document.getElementById('poll-content-wrapper').style.display = 'none';
+                document.getElementById('poll-confirmation-message').style.display = 'block';
+
+                // Hide the modal after a short delay
+                setTimeout(() => {
+                    document.getElementById('student-poll-modal').classList.remove('visible');
+                     // Reset modal view for the next time it opens
+                    document.getElementById('poll-content-wrapper').style.display = 'block';
+                    document.getElementById('poll-confirmation-message').style.display = 'none';
+                }, 1500);
+
+                renderPollResults(); // This updates the teacher's view in the background
+            } else {
+                pollErrorMessage.textContent = 'Please select an option before submitting.';
+                pollErrorMessage.style.display = 'block';
+            }
+        }
+
+        function handleStudentAskAi() {
+            const modalBody = `<form id="student-ai-form"><div class="form-group"><label for="ai-concept">What concept do you need help with?</label><input type="text" id="ai-concept" placeholder="e.g., CSS Flexbox, Python Dictionaries" required></div><button type="submit" class="btn btn-primary">Explain</button></form>`;
+            showAiModal('AI Study Helper', modalBody);
+
+            document.getElementById('student-ai-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const concept = document.getElementById('ai-concept').value;
+                const prompt = `Explain the concept of "${concept}" in simple terms, as if you were tutoring a high school student. Use analogies and simple examples. Format the response with line breaks.`;
+                const payload = { contents: [{ parts: [{ text: prompt }] }] };
+                const resultText = await callGeminiAPI(payload, aiModalResult);
+                if (resultText) {
+                    aiModalResult.innerHTML = resultText.replace(/\n/g, '<br>');
+                }
+            });
+        }
+        
+        function handleTeacherGenerateQuiz(courseTitle) {
+            const modalBody = `<form id="teacher-quiz-form"><div class="form-group"><label for="ai-quiz-topic">Quiz Topic</label><input type="text" id="ai-quiz-topic" value="${courseTitle}" required></div><div class="form-group"><label for="ai-quiz-questions">Number of Questions</label><input type="number" id="ai-quiz-questions" value="3" min="1" max="10" required></div><button type="submit" class="btn btn-info">Generate</button></form>`;
+            showAiModal('AI Quiz Generator', modalBody);
+
+            document.getElementById('teacher-quiz-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const topic = document.getElementById('ai-quiz-topic').value;
+                const numQuestions = document.getElementById('ai-quiz-questions').value;
+                const prompt = `Generate a multiple-choice quiz with ${numQuestions} questions on the topic of '${topic}'. Provide the output as a valid JSON array where each object has "question" (string), "options" (array of 4 strings), and "answer" (the correct option string from the options array).`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                };
+                const resultJsonString = await callGeminiAPI(payload, aiModalResult);
+                if (resultJsonString) {
+                    try {
+                        const quizData = JSON.parse(resultJsonString);
+                        displayGeneratedQuiz(quizData);
+                    } catch (parseError) {
+                        console.error("JSON Parsing Error:", parseError);
+                        aiModalResult.innerHTML = `<p style="color: red;">Error: Could not parse the AI's response.</p><pre>${resultJsonString}</pre>`;
+                    }
+                }
+            });
+        }
+        
+        // --- 8. EVENT LISTENERS ---
+        document.getElementById('close-ai-modal-btn').addEventListener('click', hideAiModal);
+        
+        document.getElementById('show-student-login').addEventListener('click', () => { /* ... same as before ... */ });
+        document.getElementById('show-teacher-login').addEventListener('click', () => { /* ... same as before ... */ });
+        document.getElementById('back-to-landing').addEventListener('click', () => showPage('landing-page'));
+        document.getElementById('login-form').addEventListener('submit', (e) => { /* ... same as before ... */ });
+        
+        document.getElementById('bandwidth-selector').addEventListener('change', (e) => { /* ... same as before ... */ });
+        document.getElementById('create-poll-btn').addEventListener('click', () => { /* ... same as before ... */ });
+        document.getElementById('poll-vote-form').addEventListener('submit', handlePollVote);
+
+        // Delegated event listener for dynamic elements
         document.body.addEventListener('click', (e) => {
             if (e.target.matches('.course-card, .course-card *')) {
                 const card = e.target.closest('.course-card');
@@ -607,11 +902,41 @@
                 const pageToShow = currentUserRole === 'student' ? 'student-dashboard-page' : 'teacher-dashboard-page';
                 showPage(pageToShow);
             }
+            if (e.target.matches('.tab-button')) {
+                const button = e.target;
+                const tabsContainer = button.closest('.tabs');
+                tabsContainer.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                const coursePageMain = button.closest('main');
+                coursePageMain.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.toggle('active', content.id === button.dataset.tab);
+                });
+            }
+            if (e.target.id === 'ask-ai-student-btn') {
+                handleStudentAskAi();
+            }
+            if (e.target.id === 'show-quiz-generator-btn') {
+                const courseTitle = document.getElementById('course-title').textContent;
+                handleTeacherGenerateQuiz(courseTitle);
+            }
         });
 
-        // --- 6. INITIALIZATION ---
+        // Re-attaching unchanged event handlers for brevity in this example
+        document.getElementById('show-student-login').addEventListener('click', () => { currentUserRole = 'student'; const loginTitle = document.getElementById('login-role-title'); const loginButton = document.querySelector('#login-form .btn'); loginTitle.textContent = 'Student Login'; loginTitle.style.color = 'var(--primary-color)'; loginButton.className = 'btn btn-primary'; document.getElementById('email').value = "student@example.com"; document.getElementById('password').value = "student123"; showPage('login-page'); });
+        document.getElementById('show-teacher-login').addEventListener('click', () => { currentUserRole = 'teacher'; const loginTitle = document.getElementById('login-role-title'); const loginButton = document.querySelector('#login-form .btn'); loginTitle.textContent = 'Teacher Login'; loginTitle.style.color = 'var(--teacher-primary-color)'; loginButton.className = 'btn btn-info'; document.getElementById('email').value = "teacher@example.com"; document.getElementById('password').value = "teacher123"; showPage('login-page'); });
+        document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); if (currentUserRole === 'student') { renderStudentDashboard(); showPage('student-dashboard-page'); } else if (currentUserRole === 'teacher') { renderTeacherDashboard(); showPage('teacher-dashboard-page'); } });
+        document.getElementById('bandwidth-selector').addEventListener('change', (e) => { const statusEl = document.getElementById('bandwidth-status'); const videoEl = document.getElementById('video-placeholder'); const value = e.target.value; let statusText = ''; if (value === 'full') statusText = 'Mode: Full Experience'; else if (value === 'low') statusText = 'Mode: Low Bandwidth (Audio + Screen)'; else statusText = 'Mode: Audio Only'; videoEl.style.opacity = (value === 'audio') ? 0.3 : 1; statusEl.textContent = statusText; });
+        document.getElementById('create-poll-btn').addEventListener('click', () => { renderPollCreationForm(); document.getElementById('poll-creation-area').style.display = 'none'; document.getElementById('poll-management-area').style.display = 'block'; });
+        handlePollLaunch = (e) => { e.preventDefault(); const question = document.getElementById('poll-q').value; const optionInputs = document.querySelectorAll('.poll-option-input'); const options = Array.from(optionInputs).map(input => ({ text: input.value.trim(), votes: 0 })).filter(opt => opt.text !== ''); if (question && options.length >= 2) { activePoll = { question, options }; document.getElementById('poll-creation-area').style.display = 'none'; document.getElementById('poll-management-area').style.display = 'block'; renderPollResults(); if (currentUserRole !== 'teacher') { renderPollForStudent(); } } else { alert('Please provide a question and at least two options.'); } };
+        
+        // This is the old handlePollVote that is being replaced. I'm keeping the original line here for context but will replace it with the new function declaration above.
+        // handlePollVote = (e) => { e.preventDefault(); const selectedOption = document.querySelector('input[name="poll-vote"]:checked'); if (selectedOption && activePoll) { const optionIndex = parseInt(selectedOption.value, 10); activePoll.options[optionIndex].votes++; document.getElementById('student-poll-modal').classList.remove('visible'); renderPollResults(); } else { alert('Please select an option.'); } };
+
+        // --- 9. INITIALIZATION ---
         showPage('landing-page');
     });
     </script>
 </body>
 </html>
+
